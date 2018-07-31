@@ -17,4 +17,6 @@
 
 Auth::routes();
 
-Route::get('/', 'HomeController@index')->name('home');
+Route::get('/', 'HomeController@index');
+Route::post('/', 'HomeController@play');
+Route::post('/prize', 'HomeController@prize');

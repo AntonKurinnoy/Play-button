@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->integer('bonus_points')->default(0);
             $table->string('stuff')->default("");
-            $table->integer('max_money_to_win')->default(100);
+            $table->integer('max_money_to_win')->default(1000);
             $table->integer('max_stuff_to_win')->default(3);
             $table->integer('timer')->default(0);
             $table->rememberToken();

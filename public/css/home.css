@@ -1,0 +1,7 @@
+div.form-group{
+    text-align: center;
+}
+
+.tpl, div[name="prize"]{
+    display: none;
+}
