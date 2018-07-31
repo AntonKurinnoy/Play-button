@@ -8,9 +8,6 @@ $('button[name="play"]').on('click',function () {
             $('div.result').removeClass('tpl');
             $('label[name="prize"]').html(result['prize']);
 
-            /*for (var i in result)
-                console.log(result[i]);*/
-
             if (result['prize'] === "денежный приз"){
 
                 $('label[for="money"]').html('Получить деньги:'+ result['sum'] +' грн.');
@@ -30,13 +27,20 @@ $('button[name="play"]').on('click',function () {
                 $('div[name="bonusPoints"]').removeClass('tpl');
                 $('button[name="play"]').hide();
 
-                $('label[name="bonusPoints"]').html('Вы вытграли '+result['bonusPoints']+' баллов!');
+                $('label[name="bonusPoints"]').html('Вы выиграли '+result['bonusPoints']+' баллов!');
                 $('label[name="bonusPoints"]').attr("data",result['bonusPoints']);
 
                 $('button[name="confirm"]').attr('onclick','confirm("bonusPoints")');
 
             } else if (result['prize'] === "физический предмет"){
+                $('div[name="stuff"]').removeClass('tpl');
+                $('button[name="play"]').hide();
 
+                $('label[name="stuff"]').html('Вы выиграли '+result['stuff']);
+                $('label[name="stuff"]').attr("id",result['id']);
+                $('label[name="stuff"]').attr("data",result['stuff']);
+
+                $('button[name="confirm"]').attr('onclick','confirm("stuff")');
             }
 
 
@@ -45,8 +49,23 @@ $('button[name="play"]').on('click',function () {
     });
 });
 
+function sendData(data) {
+    $.ajax({
+        type: 'POST',
+        dataType: 'JSON',
+        url: '/prize',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        async:false,
+        data: { 'data':data },
+        success: function (result) {
+
+        }
+    });
+}
+
 function confirm(name) {
 
+    //выигрыш - деньги
     if (name === "money"){
         var input = $('div[name="money"] input:checked');
 
@@ -64,38 +83,26 @@ function confirm(name) {
             });
         }*/
 
-
         // в любом случае отправляем информацию о выиграше для обновления информации в базе
         var data = {prize : input.attr('id'),sum : input.val() };
 
-        $.ajax({
-            type: 'POST',
-            dataType: 'JSON',
-            url: '/prize',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            async:false,
-            data: { 'data':data },
-            success: function (result) {
+        sendData(data);
 
-            }
-        });
-
+    //выигрыш - бонусные баллы
     } else if (name === "bonusPoints"){
 
         var input = $('label[name="bonusPoints"]');
         var data = {prize : input.attr('name'),sum : input.attr("data") };
 
-        $.ajax({
-            type: 'POST',
-            dataType: 'JSON',
-            url: '/prize',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            async:false,
-            data: { 'data':data },
-            success: function (result) {
+        sendData(data);
 
-            }
-        });
+    //выигрыш - товары
+    } else if (name === "stuff"){
+
+        var input = $('label[name="stuff"]');
+        var data = {prize : input.attr('data'),id : input.attr("id") };
+
+        sendData(data);
     }
 
     window.location.reload();

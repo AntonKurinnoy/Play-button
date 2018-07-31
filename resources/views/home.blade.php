@@ -37,7 +37,7 @@
                     <label name="bonusPoints"></label>
                 </div>
                 <div name="stuff" class="tpl">
-                    333
+                    <label name="stuff"></label>
                 </div>
 
                 <div class="form-group">

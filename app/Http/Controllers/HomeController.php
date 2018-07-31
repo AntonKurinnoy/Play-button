@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Stuff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
@@ -25,7 +27,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-
         $user = Auth::user();
 
         $stuff = $user->stuff;
@@ -47,7 +48,15 @@ class HomeController extends Controller
          */
 
         $prize = ['денежный приз','бонусные баллы','физический предмет'];
-        $type = rand(1,3);
+        //проверяем позиции, по которым можно проводить розыгрыш
+        $user = Auth::user();
+        $arr = [2];
+        if ($user->max_money_to_win > 0)
+            $arr[] = 1;
+        if ($user->max_stuff_to_win > 0)
+            $arr[] = 3;
+
+        $type = $arr[array_rand($arr)];
 
         if ($type === 1){
             $sum = rand(1,100);
@@ -74,6 +83,15 @@ class HomeController extends Controller
             ]);
         } elseif ($type === 3){
 
+            $stuff = Stuff::pluck('id')->all();
+            $id = $stuff[array_rand($stuff)];
+            $stuff = Stuff::find($id);
+
+            return response()->json([
+                'prize' => $prize[$type-1],
+                'stuff' => $stuff->name,
+                'id' => $stuff->id
+            ]);
         }
 
 
@@ -84,21 +102,33 @@ class HomeController extends Controller
 
         $prize = $request->all()['data']['prize'];
         $user = Auth::user();
+        if ($user->timer < time()){
+            $user->timer = time() + 24*60*60;
+            $user->max_money_to_win = 100;
+            $user->max_stuff_to_win = 3;
+        }
 
         //если игрок выбрал деньги
         if ($prize === "money"){
-
-            if ($user->timer < time()){
-                $user->timer = time() + 24*60*60;
-                $user->max_money_to_win = 100;
-            }
             $user->max_money_to_win = $user->max_money_to_win - $request->all()['data']['sum'];
-
             $user->save();
 
         //если игрок выбрал баллы
         } elseif ($prize === "bonusPoints"){
             $user->bonus_points = $user->bonus_points + $request->all()['data']['sum'];
+            $user->save();
+
+        //оставшийся вариант с предметами
+        } else {
+            DB::table('stuff_to_send')->insert([
+                'stuff_id' => $request->all()['data']['id'],
+                'status'=> 'отправить товар',
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $user->max_stuff_to_win = $user->max_stuff_to_win - 1;
+            $user->stuff .= $request->all()['data']['prize']." ";
             $user->save();
         }
 
